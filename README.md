@@ -15,11 +15,11 @@ VencordGuardian is a simple PowerShell script that repairs/updates **Vencord** a
 
 ## Installation
 
-1. Save `vencord-guardian.ps1` anywhere you like.
+1. Save `VencordGuardian.ps1` anywhere you like.
 2. Run it once with PowerShell:
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File vencord-guardian.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File VencordGuardian.ps1
 ```
 
 That's it. It will create the scheduled task, register notifications, and run a repair right away. From then on it runs daily on its own.
@@ -49,7 +49,7 @@ Set-ScheduledTask -TaskName 'VencordGuardian-Daily' -Trigger $trigger
 
 Optionally remove the rest of its traces:
 
-- Notification shortcut: `%APPDATA%\Microsoft\Windows\Start Menu\Programs\Vencord Guardian.lnk`
+- Notification shortcut: `%APPDATA%\Microsoft\Windows\Start Menu\Programs\VencordGuardian.lnk`
 - Cached icon: `%LOCALAPPDATA%\VencordGuardian\`
 - Run logs: the `logs/` folder next to the script
 

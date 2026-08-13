@@ -85,7 +85,7 @@ function Ensure-Aumid {
     if (Get-StartApps | Where-Object { $_.AppID -eq $aumid }) { return }
 
     try {
-        $lnkName = 'Vencord Guardian'
+        $lnkName = 'VencordGuardian'
         $startMenu = Join-Path $env:APPDATA 'Microsoft\Windows\Start Menu\Programs'
         $lnkPath = Join-Path $startMenu "$lnkName.lnk"
 
