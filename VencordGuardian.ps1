@@ -242,7 +242,7 @@ $appProcessName = 'Discord.exe'
 $appExeFallback = $null
 
 if ($discordWasOpen) {
-    Send-Notification -Title 'Vencord Guardian' -Message 'Discord va a cerrarse'
+    Send-Notification -Title 'VencordGuardian' -Message 'Discord is closing'
     $main = $discordProcs | Where-Object { $_.Path -and $_.Path -notlike '*SystemHelper*' } | Sort-Object Id | Select-Object -First 1
     if ($main -and $main.Path) {
         $branchRoot = Split-Path (Split-Path $main.Path -Parent) -Parent
@@ -329,11 +329,11 @@ $state = if ($discordWasOpen) { 'Discord relanzado.' } else { 'Discord no estaba
 $finalMessage = "$summary $state"
 
 if ($proc.ExitCode -eq 0) {
-    Send-Notification -Title 'Vencord Guardian' -Message 'Vencord reparado'
+    Send-Notification -Title 'VencordGuardian' -Message 'Vencord repaired'
     Write-AppEvent -Message $finalMessage
 }
 else {
-    Send-Notification -Title 'Vencord Guardian' -Message 'Error reparando Vencord' -Icon 'Error'
+    Send-Notification -Title 'VencordGuardian' -Message 'Error repairing Vencord' -Icon 'Error'
     Write-AppEvent -Message $finalMessage -Kind 'Error'
 }
 
