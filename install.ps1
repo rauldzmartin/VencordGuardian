@@ -1,3 +1,11 @@
+<#
+.SYNOPSIS
+  Installs or updates VencordGuardian.
+
+.DESCRIPTION
+  Downloads VencordGuardian.ps1 to %LOCALAPPDATA%\VencordGuardian and runs it.
+  Safe to re-run: it always overwrites with the latest version and re-runs the repair.
+#>
 $ErrorActionPreference = 'Stop'
 
 $url = 'https://raw.githubusercontent.com/rauldzmartin/VencordGuardian/main/VencordGuardian.ps1'

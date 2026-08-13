@@ -12,7 +12,9 @@ Open PowerShell and run this single line:
 irm https://raw.githubusercontent.com/rauldzmartin/VencordGuardian/main/install.ps1 | iex
 ```
 
-That's it. It downloads the script, installs it, and runs a repair right away. From then on it runs daily on its own.
+That's it. It downloads the script, installs it, and runs a repair right away. From then on it runs daily on its own. Re-running the same line updates VencordGuardian to the latest version.
+
+> Note: the command downloads and runs a script from this repository. If you prefer, review [install.ps1](https://github.com/rauldzmartin/VencordGuardian/blob/main/install.ps1) first, or use the Manual install section below.
 
 ## What it does
 

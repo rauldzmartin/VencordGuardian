@@ -1,3 +1,25 @@
+<#
+.SYNOPSIS
+  Repairs/updates Vencord automatically and sends a Windows toast with the result.
+
+.DESCRIPTION
+  Resolves the official Vencord installer (local or downloaded), closes Discord,
+  runs "VencordInstallerCli.exe -repair -branch auto" and relaunches Discord.
+  Registers the daily scheduled task (VencordGuardian-Daily at 07:00) and a
+  Start Menu shortcut with an AUMID for native notifications.
+
+.PARAMETER Installer
+  Path to the Vencord installer. If omitted, searched locally and downloaded.
+
+.PARAMETER NoRegister
+  Skip creating/updating the scheduled task.
+
+.PARAMETER NoNotify
+  Skip notification registration and sending.
+
+.EXAMPLE
+  powershell -NoProfile -ExecutionPolicy Bypass -File VencordGuardian.ps1
+#>
 param(
     [string]$Installer = '',
     [switch]$NoRegister,
