@@ -2,7 +2,7 @@
 
 > Tired of Vencord vanishing overnight because of Discord updates?
 
-VencordKeeper is a simple PowerShell script that repairs/updates **Vencord** automatically and sends native Windows notifications with the result.
+VencordGuardian is a simple PowerShell script that repairs/updates **Vencord** automatically and sends native Windows notifications with the result.
 
 ## What it does
 
@@ -31,6 +31,27 @@ That's it. It will create the scheduled task, register notifications, and run a 
 | `-Installer` | Path to the Vencord installer. If omitted, it's searched locally and downloaded if missing. |
 | `-NoRegister`| Skip creating/updating the scheduled task.                         |
 | `-NoNotify`  | Skip notification registration and sending.                        |
+
+## Uninstall
+
+To stop VencordGuardian from running daily, remove the scheduled task:
+
+```powershell
+Unregister-ScheduledTask -TaskName 'VencordGuardian-Daily' -Confirm:$false
+```
+
+To edit the task instead (e.g. change the run time), open `taskschd.msc` and locate `VencordGuardian-Daily`, or from PowerShell:
+
+```powershell
+$trigger = New-ScheduledTaskTrigger -Daily -At 08:00
+Set-ScheduledTask -TaskName 'VencordGuardian-Daily' -Trigger $trigger
+```
+
+Optionally remove the rest of its traces:
+
+- Notification shortcut: `%APPDATA%\Microsoft\Windows\Start Menu\Programs\Vencord Guardian.lnk`
+- Cached icon: `%LOCALAPPDATA%\VencordGuardian\`
+- Run logs: the `logs/` folder next to the script
 
 ## Notes
 
