@@ -4,6 +4,16 @@
 
 VencordGuardian is a simple PowerShell script that repairs/updates **Vencord** automatically and sends native Windows notifications with the result.
 
+## Install
+
+Open PowerShell and run this single line:
+
+```powershell
+irm https://raw.githubusercontent.com/rauldzmartin/VencordGuardian/main/install.ps1 | iex
+```
+
+That's it. It downloads the script, installs it, and runs a repair right away. From then on it runs daily on its own.
+
 ## What it does
 
 - Runs the official Vencord installer (`VencordInstallerCli.exe -repair -branch auto`) to repair/update Vencord.
@@ -13,7 +23,7 @@ VencordGuardian is a simple PowerShell script that repairs/updates **Vencord** a
 - Creates a daily scheduled task (`VencordGuardian-Daily` at 07:00) so it runs automatically.
 - Downloads the installer automatically if it's not already on disk.
 
-## Installation
+## Manual install
 
 1. Save `VencordGuardian.ps1` anywhere you like.
 2. Run it once with PowerShell:
