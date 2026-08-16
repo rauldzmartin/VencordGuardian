@@ -244,6 +244,19 @@ function Get-VencordInstaller {
     return $target
 }
 
+function Remove-IncompleteDiscordUpdates {
+    param([string]$Root)
+    if (-not $Root -or -not (Test-Path -LiteralPath $Root -PathType Container)) { return }
+    Get-ChildItem -LiteralPath $Root -Directory -Filter 'app-*' -ErrorAction SilentlyContinue | ForEach-Object {
+        $res = Join-Path $_.FullName 'resources'
+        $hasAsar = (Test-Path -LiteralPath (Join-Path $res 'app.asar')) -or (Test-Path -LiteralPath (Join-Path $res '_app.asar'))
+        if (-not $hasAsar) {
+            Write-Host "[vencord] Carpeta de Discord incompleta eliminada: $($_.Name)"
+            Remove-Item -LiteralPath $_.FullName -Recurse -Force -ErrorAction Stop
+        }
+    }
+}
+
 $Installer = Get-VencordInstaller
 "[vencord] Instalador: $Installer"
 
@@ -276,7 +289,15 @@ if ($discordWasOpen) {
     Start-Sleep -Seconds 2
 }
 
+$cleanRoot = if ($branchRoot) { $branchRoot } else { Join-Path $env:LOCALAPPDATA $appDataBranch }
+Remove-IncompleteDiscordUpdates -Root $cleanRoot
+
 $proc = Start-Process -FilePath $Installer -ArgumentList '-repair', '-branch', 'auto' -Wait -PassThru -NoNewWindow
+if ($proc.ExitCode -ne 0) {
+    Write-Host "[vencord] Primer intento fallido (exit $($proc.ExitCode)), reintentando..."
+    Start-Sleep -Seconds 5
+    $proc = Start-Process -FilePath $Installer -ArgumentList '-repair', '-branch', 'auto' -Wait -PassThru -NoNewWindow
+}
 
 Stop-Transcript | Out-Null
 
