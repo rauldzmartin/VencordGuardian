@@ -23,6 +23,7 @@ That's it. It downloads the script, installs it, and runs a repair right away. F
 - Sends a Windows toast notification with the official Vencord icon when done.
 - Writes a log file per run to `logs/` and an entry to the Windows Event Log.
 - Creates a daily scheduled task (`[Custom] VencordGuardian-Daily`) configured to run automatically upon wake from sleep, session unlock, logon, or at 07:00.
+- Checks for active internet connectivity on wake/unlock (waiting up to 15s) and defers execution safely if offline.
 - Runs only once per day automatically to avoid unnecessary restarts of Discord during work sessions (use `-Force` to override).
 - Downloads the installer automatically if it's not already on disk.
 

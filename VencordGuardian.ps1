@@ -317,8 +317,36 @@ function Remove-IncompleteDiscordUpdates {
     }
 }
 
-$Installer = Get-VencordInstaller
-"[vencord] Instalador: $Installer"
+function Wait-InternetConnection {
+    param([int]$TimeoutSeconds = 15)
+
+    $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
+    $hosts = @(
+        @{ Host = '1.1.1.1'; Port = 53 },
+        @{ Host = '8.8.8.8'; Port = 53 },
+        @{ Host = 'github.com'; Port = 443 }
+    )
+
+    do {
+        foreach ($target in $hosts) {
+            try {
+                $client = New-Object System.Net.Sockets.TcpClient
+                $asyncResult = $client.BeginConnect($target.Host, $target.Port, $null, $null)
+                $success = $asyncResult.AsyncWaitHandle.WaitOne(1000, $false)
+                if ($success -and $client.Connected) {
+                    $client.EndConnect($asyncResult)
+                    $client.Close()
+                    return $true
+                }
+                $client.Close()
+            }
+            catch { }
+        }
+        Start-Sleep -Seconds 1
+    } while ((Get-Date) -lt $deadline)
+
+    return $false
+}
 
 if (-not $NoRegister) { Ensure-ScheduledTask }
 if (-not $NoNotify) { Ensure-Aumid }
@@ -335,6 +363,14 @@ if (-not $Force -and (Test-Path -LiteralPath $StateFile -PathType Leaf)) {
         exit 0
     }
 }
+
+if (-not (Wait-InternetConnection -TimeoutSeconds 15)) {
+    Write-Warning "[vencord] Sin conexión a internet tras 15 segundos. Se pospone la ejecución para el próximo evento de red/desbloqueo."
+    exit 0
+}
+
+$Installer = Get-VencordInstaller
+"[vencord] Instalador: $Installer"
 
 $LogDir = Join-Path $PSScriptRoot 'logs'
 New-Item -ItemType Directory -Force -Path $LogDir | Out-Null
