@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
   Repairs/updates Vencord automatically and sends a Windows toast with the result.
 
