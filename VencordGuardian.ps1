@@ -5,7 +5,7 @@
 .DESCRIPTION
   Resolves the official Vencord installer (local or downloaded), closes Discord,
   runs "VencordInstallerCli.exe -repair -branch auto" and relaunches Discord.
-  Registers the daily scheduled task (VencordGuardian-Daily at 07:00) and a
+  Registers the daily scheduled task ([Custom] VencordGuardian-Daily at 07:00) and a
   Start Menu shortcut with an AUMID for native notifications.
 
 .PARAMETER Installer
@@ -17,13 +17,17 @@
 .PARAMETER NoNotify
   Skip notification registration and sending.
 
+.PARAMETER Force
+  Force execution even if already completed today.
+
 .EXAMPLE
   powershell -NoProfile -ExecutionPolicy Bypass -File VencordGuardian.ps1
 #>
 param(
     [string]$Installer = '',
     [switch]$NoRegister,
-    [switch]$NoNotify
+    [switch]$NoNotify,
+    [switch]$Force
 )
 
 $ErrorActionPreference = 'Stop'
@@ -198,21 +202,77 @@ function Write-AppEvent {
 
 function Ensure-ScheduledTask {
     try {
-        $taskName = 'VencordGuardian-Daily'
+        $taskName = '[Custom] VencordGuardian-Daily'
         $taskPath = $PSCommandPath
+        $userName = "$env:USERDOMAIN\$env:USERNAME"
+        $userId = [System.Security.Principal.WindowsIdentity]::GetCurrent().User.Value
+
         $task = Get-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue
         $needsUpdate = -not $task
         if ($task) {
             $currentArg = $task.Actions | Select-Object -ExpandProperty Arguments
             $needsUpdate = $currentArg -notcontains $null -and -not ($currentArg -and $currentArg.Contains($taskPath))
+            if ($task.Triggers.Count -lt 4) { $needsUpdate = $true }
         }
 
         if ($needsUpdate) {
-            $action = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$taskPath`""
-            $trigger = New-ScheduledTaskTrigger -Daily -At 07:00
-            $settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -ExecutionTimeLimit (New-TimeSpan -Minutes 30)
-            Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $trigger -Settings $settings -Description 'Repara/actualiza Vencord diariamente a las 7:00' -Force | Out-Null
-            Write-Host '[vencord] Tarea programada VencordGuardian-Daily creada/actualizada'
+            $xml = @"
+<?xml version="1.0" encoding="UTF-16"?>
+<Task version="1.3" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
+  <RegistrationInfo>
+    <Description>Repara/actualiza Vencord diariamente al despertar/desbloquear o a las 7:00</Description>
+    <URI>\$taskName</URI>
+  </RegistrationInfo>
+  <Principals>
+    <Principal id="Author">
+      <UserId>$userId</UserId>
+      <LogonType>InteractiveToken</LogonType>
+    </Principal>
+  </Principals>
+  <Settings>
+    <DisallowStartIfOnBatteries>false</DisallowStartIfOnBatteries>
+    <StopIfGoingOnBatteries>false</StopIfGoingOnBatteries>
+    <ExecutionTimeLimit>PT30M</ExecutionTimeLimit>
+    <MultipleInstancesPolicy>IgnoreNew</MultipleInstancesPolicy>
+    <StartWhenAvailable>true</StartWhenAvailable>
+    <IdleSettings>
+      <Duration>PT10M</Duration>
+      <WaitTimeout>PT1H</WaitTimeout>
+      <StopOnIdleEnd>true</StopOnIdleEnd>
+      <RestartOnIdle>false</RestartOnIdle>
+    </IdleSettings>
+    <UseUnifiedSchedulingEngine>true</UseUnifiedSchedulingEngine>
+  </Settings>
+  <Triggers>
+    <CalendarTrigger>
+      <StartBoundary>2026-08-01T07:00:00</StartBoundary>
+      <ScheduleByDay>
+        <DaysInterval>1</DaysInterval>
+      </ScheduleByDay>
+    </CalendarTrigger>
+    <LogonTrigger>
+      <UserId>$userName</UserId>
+      <Enabled>true</Enabled>
+    </LogonTrigger>
+    <SessionStateChangeTrigger>
+      <UserId>$userName</UserId>
+      <StateChange>SessionUnlock</StateChange>
+    </SessionStateChangeTrigger>
+    <EventTrigger>
+      <Enabled>true</Enabled>
+      <Subscription>&lt;QueryList&gt;&lt;Query Id="0" Path="System"&gt;&lt;Select Path="System"&gt;*[System[Provider[@Name='Microsoft-Windows-Power-Troubleshooter'] and (EventID=1)]]&lt;/Select&gt;&lt;/Query&gt;&lt;/QueryList&gt;</Subscription>
+    </EventTrigger>
+  </Triggers>
+  <Actions Context="Author">
+    <Exec>
+      <Command>powershell.exe</Command>
+      <Arguments>-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$taskPath`"</Arguments>
+    </Exec>
+  </Actions>
+</Task>
+"@
+            Register-ScheduledTask -TaskName $taskName -Xml $xml -Force | Out-Null
+            Write-Host "[vencord] Tarea programada $taskName creada/actualizada"
         }
     }
     catch {
@@ -262,6 +322,19 @@ $Installer = Get-VencordInstaller
 
 if (-not $NoRegister) { Ensure-ScheduledTask }
 if (-not $NoNotify) { Ensure-Aumid }
+
+$StateDir = Join-Path $env:LOCALAPPDATA 'VencordGuardian'
+New-Item -ItemType Directory -Force -Path $StateDir | Out-Null
+$StateFile = Join-Path $StateDir 'last_run_date.txt'
+$Today = (Get-Date).ToString('yyyy-MM-dd')
+
+if (-not $Force -and (Test-Path -LiteralPath $StateFile -PathType Leaf)) {
+    $LastRun = (Get-Content -LiteralPath $StateFile -Raw).Trim()
+    if ($LastRun -eq $Today) {
+        Write-Host "[vencord] Vencord ya ha sido verificado/reparado hoy ($Today). Omitiendo ejecución (usa -Force para forzar)."
+        exit 0
+    }
+}
 
 $LogDir = Join-Path $PSScriptRoot 'logs'
 New-Item -ItemType Directory -Force -Path $LogDir | Out-Null
@@ -372,6 +445,7 @@ $state = if ($discordWasOpen) { 'Discord relanzado.' } else { 'Discord no estaba
 $finalMessage = "$summary $state"
 
 if ($proc.ExitCode -eq 0) {
+    Set-Content -LiteralPath $StateFile -Value $Today -Force
     Send-Notification -Title 'VencordGuardian' -Message 'Vencord repaired'
     Write-AppEvent -Message $finalMessage
 }

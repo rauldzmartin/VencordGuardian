@@ -22,7 +22,8 @@ That's it. It downloads the script, installs it, and runs a repair right away. F
 - Closes Discord before repairing and relaunches it afterwards (respecting minimize-to-tray settings).
 - Sends a Windows toast notification with the official Vencord icon when done.
 - Writes a log file per run to `logs/` and an entry to the Windows Event Log.
-- Creates a daily scheduled task (`VencordGuardian-Daily` at 07:00) so it runs automatically.
+- Creates a daily scheduled task (`[Custom] VencordGuardian-Daily`) configured to run automatically upon wake from sleep, session unlock, logon, or at 07:00.
+- Runs only once per day automatically to avoid unnecessary restarts of Discord during work sessions (use `-Force` to override).
 - Downloads the installer automatically if it's not already on disk.
 
 ## Manual install
@@ -43,20 +44,21 @@ That's it. It will create the scheduled task, register notifications, and run a 
 | `-Installer` | Path to the Vencord installer. If omitted, it's searched locally and downloaded if missing. |
 | `-NoRegister`| Skip creating/updating the scheduled task.                         |
 | `-NoNotify`  | Skip notification registration and sending.                        |
+| `-Force`     | Force execution even if already completed today.                   |
 
 ## Uninstall
 
 To stop VencordGuardian from running daily, remove the scheduled task:
 
 ```powershell
-Unregister-ScheduledTask -TaskName 'VencordGuardian-Daily' -Confirm:$false
+Unregister-ScheduledTask -TaskName '[Custom] VencordGuardian-Daily' -Confirm:$false
 ```
 
-To edit the task instead (e.g. change the run time), open `taskschd.msc` and locate `VencordGuardian-Daily`, or from PowerShell:
+To edit the task instead (e.g. change the run time), open `taskschd.msc` and locate `[Custom] VencordGuardian-Daily`, or from PowerShell:
 
 ```powershell
 $trigger = New-ScheduledTaskTrigger -Daily -At 08:00
-Set-ScheduledTask -TaskName 'VencordGuardian-Daily' -Trigger $trigger
+Set-ScheduledTask -TaskName '[Custom] VencordGuardian-Daily' -Trigger $trigger
 ```
 
 Optionally remove the rest of its traces:
