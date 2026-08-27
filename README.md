@@ -9,7 +9,7 @@ VencordGuardian is a simple PowerShell script that repairs/updates **Vencord** a
 Open PowerShell and run this single line:
 
 ```powershell
-irm https://raw.githubusercontent.com/rauldzmartin/VencordGuardian/main/install.ps1 | iex
+iwr https://raw.githubusercontent.com/rauldzmartin/VencordGuardian/main/install.ps1 -OutFile "$env:TEMP\install.ps1"; powershell -ExecutionPolicy Bypass -File "$env:TEMP\install.ps1"
 ```
 
 That's it. It downloads the script, installs it, and runs a repair right away. From then on it runs daily on its own. Re-running the same line updates VencordGuardian to the latest version.
