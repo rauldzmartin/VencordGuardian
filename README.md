@@ -18,13 +18,13 @@ That's it. It downloads the script, installs it, and runs a repair right away. F
 
 ## What it does
 
-- Runs the official Vencord installer (`VencordInstallerCli.exe -repair -branch auto`) to repair/update Vencord.
+- **Smart verification**: verifies whether Vencord is actually missing or unpatched before taking any action. If already patched and working, it exits silently in milliseconds without closing Discord or sending notifications.
+- Runs the official Vencord installer (`VencordInstallerCli.exe -repair -branch auto`) only when a repair is actually required (or when `-Force` is specified).
 - Closes Discord before repairing and relaunches it afterwards (respecting minimize-to-tray settings).
-- Sends a Windows toast notification with the official Vencord icon when done.
+- Sends a Windows toast notification with the official Vencord icon only when a repair occurs.
 - Writes a log file per run to `logs/` and an entry to the Windows Event Log.
 - Creates a daily scheduled task (`[Custom] VencordGuardian-Daily`) configured to run automatically upon wake from sleep, session unlock, logon, or at 07:00.
 - Checks for active internet connectivity on wake/unlock (waiting up to 15s) and defers execution safely if offline.
-- Runs only once per day automatically to avoid unnecessary restarts of Discord during work sessions (use `-Force` to override).
 - Downloads the installer automatically if it's not already on disk.
 
 ## Manual install
@@ -45,7 +45,7 @@ That's it. It will create the scheduled task, register notifications, and run a 
 | `-Installer` | Path to the Vencord installer. If omitted, it's searched locally and downloaded if missing. |
 | `-NoRegister`| Skip creating/updating the scheduled task.                         |
 | `-NoNotify`  | Skip notification registration and sending.                        |
-| `-Force`     | Force execution even if already completed today.                   |
+| `-Force`     | Force repair even if Vencord is already patched.                   |
 
 ## Uninstall
 
@@ -65,7 +65,7 @@ Set-ScheduledTask -TaskName '[Custom] VencordGuardian-Daily' -Trigger $trigger
 Optionally remove the rest of its traces:
 
 - Notification shortcut: `%APPDATA%\Microsoft\Windows\Start Menu\Programs\VencordGuardian.lnk`
-- Cached icon: `%LOCALAPPDATA%\VencordGuardian\`
+- Cached state and icon: `%LOCALAPPDATA%\VencordGuardian\` (contains `vencord.ico` and `last_fail_date.txt` if any)
 - Run logs: the `logs/` folder next to the script
 
 ## Notes
